@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f4f5f9">
+<title>Little Print: Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@800;900&family=Inter:wght@400;500;600;700&family=Fira+Sans:wght@500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --line-gap: 57px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif; color: var(--ink); background-color: var(--bg);
+    background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--line-gap) - 1px), var(--rule) calc(var(--line-gap) - 1px), var(--rule) var(--line-gap));
+    min-height: 100vh;
+  }
+  .page { position: relative; max-width: 1080px; margin: 0 auto; padding: 14px 28px 80px 48px; min-height: 100vh; }
+  .page::before { content: ""; position: absolute; top: 0; bottom: 0; left: 18px; width: 2px; background: var(--margin); }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .kicker { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; letter-spacing: .16em; color: var(--ink-2); }
+  .right { display: flex; align-items: center; gap: 6px; }
+  .theme { display: flex; border: 1px solid var(--rule); background: var(--bg); border-radius: 99px; padding: 3px; }
+  .theme button { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 11px; letter-spacing: .12em; border: 0; background: transparent; color: var(--ink-2); padding: 7px 11px; border-radius: 99px; cursor: pointer; }
+  .theme button.on { background: var(--ink); color: var(--bg); }
+  .scheme { position: relative; }
+  .scheme-btn { display: grid; place-items: center; width: 34px; height: 34px; background: var(--bg); border: 1px solid var(--rule); border-radius: 50%; cursor: pointer; padding: 0; }
+  .scheme-btn .dot { width: 20px; height: 20px; border-radius: 50%; background: conic-gradient(var(--blue) 0 50%, var(--red) 0 100%); border: 2px solid var(--card); box-shadow: 0 0 0 1px var(--rule); }
+  .scheme-pop { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; width: 290px; background: var(--card); border: 2px solid var(--ink); border-radius: 14px; box-shadow: 5px 5px 0 var(--ink); padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .scheme-pop .label { grid-column: 1 / -1; margin: 0 0 2px; }
+  .sw { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); background: var(--bg); border: 2px solid transparent; border-radius: 10px; padding: 8px 9px; cursor: pointer; }
+  .sw:hover { border-color: var(--rule); }
+  .sw.on { border-color: var(--blue); }
+  .sw-dots { display: flex; gap: 3px; }
+  .sw-dots i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); }
+  .sw-dots i:nth-child(4) { margin-left: 5px; }
+
+  .title { display: flex; align-items: flex-start; gap: 14px; margin-top: 22px; }
+  .title h1 { font-family: 'Inter Tight', sans-serif; font-weight: 900; font-size: clamp(54px, 10vw, 80px); line-height: .85; letter-spacing: -.065em; }
+  .title .print { font-family: 'Fira Sans', sans-serif; font-weight: 600; font-size: clamp(26px, 5vw, 36px); color: var(--red); margin-top: 4px; }
+  .title .badge { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 11px; letter-spacing: .16em; background: var(--ink); color: var(--bg); border-radius: 6px; padding: 5px 8px; margin-top: 12px; }
+  hr.thick { border: 0; height: 2px; background: var(--ink); margin: 20px 0 22px; }
+  h2.label { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; letter-spacing: .16em; color: var(--ink-2); margin-bottom: 12px; }
+
+  .card { background: var(--card); border: 2px solid var(--ink); border-radius: 16px; box-shadow: 5px 5px 0 var(--ink); padding: 18px; }
+  .login { max-width: 420px; }
+  .login p { font-size: 14px; color: var(--ink-2); line-height: 1.5; margin-bottom: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field label { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: var(--muted); }
+  input, select, textarea { font: inherit; font-size: 15px; padding: 11px 13px; border-radius: 10px; border: 2px solid var(--rule); background: var(--bg); color: var(--ink); width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); }
+  textarea { resize: vertical; min-height: 84px; }
+  .btn { font: inherit; font-weight: 600; font-size: 15px; border-radius: 11px; padding: 11px 18px; cursor: pointer; border: 2px solid var(--ink); background: transparent; color: var(--ink); }
+  .btn.primary { background: var(--ink); color: var(--bg); }
+  .btn.small { padding: 6px 11px; font-size: 13px; border-radius: 8px; border-width: 1.5px; }
+  .btn.danger { border-color: var(--red); color: var(--red); }
+  .btn.danger.armed { background: var(--red); color: #fff; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .err { color: var(--red); font-size: 14px; margin-top: 8px; min-height: 20px; }
+  .ok { color: var(--green); }
+
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+  .tab { font: inherit; font-size: 15px; color: var(--ink); background: var(--chip); border: 2px solid transparent; border-radius: 99px; padding: 9px 16px; cursor: pointer; }
+  .tab.on { background: var(--blue); color: var(--blue-ink); }
+  .tabs .spacer { flex: 1; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .stat { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 14px; }
+  .stat .k { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: .14em; color: var(--muted); }
+  .stat .v { font-family: 'Inter Tight', sans-serif; font-weight: 900; font-size: 30px; letter-spacing: -.03em; margin-top: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } }
+  .bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding-top: 10px; }
+  .bars .b { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+  .bars .b i { width: 100%; background: var(--blue); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .bars .b span { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted); }
+  .bars .b em { font-style: normal; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-2); }
+  .hbar { display: grid; grid-template-columns: 140px 1fr 70px; gap: 8px; align-items: center; font-size: 13px; padding: 4px 0; }
+  .hbar .track { height: 10px; background: var(--chip); border-radius: 99px; overflow: hidden; }
+  .hbar .track i { display: block; height: 100%; background: var(--blue); border-radius: 99px; }
+  .hbar .n { font-family: 'JetBrains Mono', monospace; font-size: 12px; text-align: right; color: var(--ink-2); }
+  .muted { color: var(--muted); font-size: 13px; }
+  .list-q { font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .list-q:last-child { border: 0; }
+
+  .tbl-wrap { overflow-x: auto; background: var(--card); border: 2px solid var(--ink); border-radius: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .12em; color: var(--muted); font-weight: 700; padding: 10px 12px; border-bottom: 1px solid var(--rule); white-space: nowrap; cursor: pointer; user-select: none; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  tr.banned td { opacity: .55; }
+  td.num { font-family: 'JetBrains Mono', monospace; text-align: right; white-space: nowrap; }
+  th.num { text-align: right; }
+  td.acts { white-space: nowrap; text-align: right; }
+  td.acts .btn { margin-left: 4px; }
+  .pill { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: .08em; padding: 3px 7px; border-radius: 99px; background: var(--chip); color: var(--ink-2); }
+  .pill.bad { background: var(--red); color: #fff; }
+  .pill.warn { background: color-mix(in srgb, var(--red) 18%, transparent); color: var(--red); }
+  .pill.good { background: var(--done-bg); color: var(--green); }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .toolbar input, .toolbar select { width: auto; flex: 1 1 200px; padding: 9px 12px; font-size: 14px; }
+  .wrongs { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .linkish { background: none; border: 0; font: inherit; color: var(--blue); cursor: pointer; padding: 0; text-align: left; }
+  .linkish:hover { text-decoration: underline; }
+  .preview { margin-top: 10px; }
+  .notice { display: flex; align-items: flex-start; gap: 10px; background: var(--card); border: 2px solid var(--ink); border-left: 8px solid var(--blue); border-radius: 12px; padding: 10px 12px; font-size: 15px; line-height: 1.45; }
+  .notice.warning { border-left-color: var(--red); }
+  .notice.success { border-left-color: var(--green); }
+  .notice .tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: .14em; color: var(--muted); padding-top: 3px; white-space: nowrap; }
+  .notice.private { border-left-color: #b8860b; }
+  .seg { display: inline-flex; gap: 4px; padding: 4px; border: 2px solid var(--ink); border-radius: 999px; margin-bottom: 14px; flex-wrap: wrap; }
+  .segb { font: inherit; font-size: 14px; font-weight: 600; padding: 7px 14px; border: 0; border-radius: 999px; background: transparent; color: var(--ink); cursor: pointer; }
+  .segb.on { background: var(--ink); color: var(--bg); }
+  .check { display: flex !important; gap: 10px; align-items: center; justify-content: flex-start; margin-top: 12px; font-size: 14px; font-family: inherit; letter-spacing: normal; text-transform: none; color: var(--ink); cursor: pointer; }
+  .check input { width: 18px !important; height: 18px; flex: none; margin: 0; padding: 0; accent-color: var(--blue); }
+  .check span { flex: 1; }
+  .good-t { color: var(--green); }
+  .notice .ntext { flex: 1; white-space: pre-wrap; word-break: break-word; }
+  .row-gap { display: flex; flex-direction: column; gap: 8px; }
+  .console { background: var(--bg); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; height: 260px; overflow: auto; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.55; white-space: pre-wrap; }
+  .console .in { color: var(--ink); font-weight: 700; margin-top: 4px; }
+  .console .out { color: var(--ink-2); }
+  .console .ok { color: var(--green); }
+  .console .bad { color: var(--red); }
+  tr.editor td { background: var(--bg); }
+  .edit-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.6fr; gap: 10px; }
+  .edit-grid .field { margin: 0; }
+  .edit-grid input { padding: 8px 10px; font-size: 14px; }
+  .quick { display: flex; gap: 4px; flex-wrap: wrap; }
+  @media (max-width: 700px) { .edit-grid { grid-template-columns: 1fr 1fr; } }
+  a.btn { text-decoration: none; display: inline-block; }
+  .sus-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sus-head .acts { display: flex; gap: 4px; flex-wrap: wrap; }
+  .reasons { margin: 10px 0 0 18px; font-size: 14px; line-height: 1.6; color: var(--ink-2); }
+  .bad-t { color: var(--red); font-weight: 700; }
+  td.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 14px; z-index: 50; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .hidden { display: none !important; }
+  @media (max-width: 560px) {
+    .page { padding-left: 32px; padding-right: 14px; }
+    .page::before { left: 14px; }
+    .hbar { grid-template-columns: 100px 1fr 56px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <div class="kicker">LITTLE PRINT · ADMIN</div>
+    <div class="right">
+      <div class="theme" id="theme">
+        <button data-t="auto">AUTO</button>
+        <button data-t="light">LIGHT</button>
+        <button data-t="dark">DARK</button>
+      </div>
+      <div class="scheme">
+        <button class="scheme-btn" id="schemeBtn" type="button" aria-label="Colour scheme" title="Colour scheme"><span class="dot"></span></button>
+        <div class="scheme-pop hidden" id="schemePop"></div>
+      </div>
+    </div>
+  </div>
+  <div class="title"><h1>Little</h1><div class="print">Print</div><div class="badge">ADMIN</div></div>
+  <hr class="thick">
+  <div id="app"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = 'https://wtedtqaiyormmfilqmja.supabase.co/rest/v1/rpc/';
+const SB_KEY = 'sb_publishable_jvUfnr8ATzhKmw2JqBlRPg_6Toni0-n';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ======================= COLOUR SCHEMES ======================= */
+const PALETTES = {
+  classic: { name: 'Classic',
+    light: { bg: '#f4f5f9', rule: '#e1e4ec', margin: '#e3a3ab', ink: '#161d3a', 'ink-2': '#3d4566', muted: '#5b6380', chip: '#e8ebf3', 'chip-hover': '#dde2ee', blue: '#2b3cc4', 'blue-ink': '#ffffff', red: '#c23a4b', green: '#2f8a4f', 'done-bg': '#d3e4da', 'done-line': '#8bbf9f', card: '#ffffff' },
+    dark:  { bg: '#11141f', rule: '#1c2130', margin: '#6b2d36', ink: '#eef0f7', 'ink-2': '#c9cde0', muted: '#8f96b0', chip: '#1e2333', 'chip-hover': '#262c40', blue: '#4b5cf0', 'blue-ink': '#ffffff', red: '#ff6b7c', green: '#4cc27a', 'done-bg': '#1d3328', 'done-line': '#3f7d57', card: '#181c2a' } },
+  forest: { name: 'Forest',
+    light: { bg: '#f1f5ef', rule: '#dde6d8', margin: '#c9a26b', ink: '#1b2e1f', 'ink-2': '#3d5543', muted: '#5f7a64', chip: '#e1eadc', 'chip-hover': '#d4e0cd', blue: '#2f6b3a', 'blue-ink': '#ffffff', red: '#b5562a', green: '#2f8a4f', 'done-bg': '#d6e8d3', 'done-line': '#8bbf8f', card: '#fbfdf9' },
+    dark:  { bg: '#0f1712', rule: '#1a261d', margin: '#5c4a2a', ink: '#e6f0e6', 'ink-2': '#b8cbb9', muted: '#84a088', chip: '#1a2a1e', 'chip-hover': '#223627', blue: '#3f8f55', 'blue-ink': '#ffffff', red: '#e59a5f', green: '#5fcf86', 'done-bg': '#1d3324', 'done-line': '#3f7d52', card: '#142019' } },
+  plum: { name: 'Plum',
+    light: { bg: '#f7f2f6', rule: '#eadfe8', margin: '#d9a0b8', ink: '#2e1530', 'ink-2': '#57385a', muted: '#7d627c', chip: '#efe3ee', 'chip-hover': '#e5d4e3', blue: '#7b2d82', 'blue-ink': '#ffffff', red: '#c2366b', green: '#2f8a4f', 'done-bg': '#dce9dc', 'done-line': '#8bbf9f', card: '#fffbfe' },
+    dark:  { bg: '#170f19', rule: '#241726', margin: '#6b2d4a', ink: '#f3e8f4', 'ink-2': '#d2bcd4', muted: '#a38aa6', chip: '#261a29', 'chip-hover': '#312234', blue: '#9447b8', 'blue-ink': '#ffffff', red: '#ff7aa6', green: '#4cc27a', 'done-bg': '#1d3328', 'done-line': '#3f7d57', card: '#1e1421' } },
+  lava: { name: 'Lava',
+    light: { bg: '#fbf3ee', rule: '#f0e0d6', margin: '#e58c6a', ink: '#2b1510', 'ink-2': '#5a3328', muted: '#82605a', chip: '#f5e4da', 'chip-hover': '#eed6c8', blue: '#c63f17', 'blue-ink': '#ffffff', red: '#8f1d1d', green: '#2f8a4f', 'done-bg': '#dfeadb', 'done-line': '#8bbf9f', card: '#fffaf7' },
+    dark:  { bg: '#160d0a', rule: '#251611', margin: '#7a2a12', ink: '#fbe9e2', 'ink-2': '#dcbcb0', muted: '#a8857a', chip: '#261612', 'chip-hover': '#331d17', blue: '#d9521f', 'blue-ink': '#ffffff', red: '#ffb347', green: '#4cc27a', 'done-bg': '#1d3328', 'done-line': '#3f7d57', card: '#1e120e' } },
+  ocean: { name: 'Ocean',
+    light: { bg: '#eef5f8', rule: '#d9e7ee', margin: '#8fc3d6', ink: '#0f2633', 'ink-2': '#2f4f60', muted: '#56737f', chip: '#dfecf2', 'chip-hover': '#d0e3ec', blue: '#0b6a9a', 'blue-ink': '#ffffff', red: '#d4573a', green: '#2f8a4f', 'done-bg': '#d5e9dc', 'done-line': '#8bbf9f', card: '#fafdff' },
+    dark:  { bg: '#0b141a', rule: '#13222b', margin: '#1f4d63', ink: '#e3f1f7', 'ink-2': '#b5cfdb', muted: '#7f9eac', chip: '#142530', 'chip-hover': '#1b313e', blue: '#1e88bd', 'blue-ink': '#ffffff', red: '#ff8a65', green: '#4cc27a', 'done-bg': '#1d3328', 'done-line': '#3f7d57', card: '#101d25' } },
+  sunset: { name: 'Sunset',
+    light: { bg: '#fdf6ef', rule: '#f1e4d6', margin: '#f0a37a', ink: '#2a1a2e', 'ink-2': '#55405a', muted: '#7c6a79', chip: '#f6e7da', 'chip-hover': '#f0dccb', blue: '#c4462b', 'blue-ink': '#ffffff', red: '#7d3c98', green: '#2f8a4f', 'done-bg': '#e0ecd9', 'done-line': '#8bbf9f', card: '#fffbf7' },
+    dark:  { bg: '#1a1218', rule: '#281c25', margin: '#7a3a2a', ink: '#f8ece4', 'ink-2': '#dcc6bb', muted: '#a88f92', chip: '#2a1d26', 'chip-hover': '#352531', blue: '#d65a3d', 'blue-ink': '#ffffff', red: '#c995e6', green: '#4cc27a', 'done-bg': '#1d3328', 'done-line': '#3f7d57', card: '#21171e' } }
+};
+function paletteMode(themeSetting) {
+  return themeSetting === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : themeSetting;
+}
+function applyPalette(scheme, themeSetting) {
+  const mode = paletteMode(themeSetting || 'light');
+  const p = (PALETTES[scheme] || PALETTES.classic)[mode];
+  const root = document.documentElement;
+  root.dataset.theme = mode;
+  for (const k in p) root.style.setProperty('--' + k, p[k]);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = p.bg;
+}
+function schemePicker(current, onPick) {
+  // builds the swatch popover contents
+  return Object.entries(PALETTES).map(([key, p]) => `
+    <button class="sw ${key === current ? 'on' : ''}" data-k="${key}" title="${p.name}">
+      <span class="sw-dots">
+        <i style="background:${p.light.bg}"></i><i style="background:${p.light.blue}"></i><i style="background:${p.light.red}"></i>
+        <i style="background:${p.dark.bg}"></i><i style="background:${p.dark.blue}"></i>
+      </span>
+      <span class="sw-name">${p.name}</span>
+    </button>`).join('');
+}
+
+
+/* ---------- prefs (theme + scheme, per device) ---------- */
+const PKEY = 'littleprint-admin-prefs';
+let PREF = { theme: 'light', scheme: 'classic' };
+try { PREF = { ...PREF, ...JSON.parse(localStorage.getItem(PKEY) || '{}') }; } catch (e) {}
+function savePref() { try { localStorage.setItem(PKEY, JSON.stringify(PREF)); } catch (e) {} }
+function applyTheme() {
+  applyPalette(PREF.scheme, PREF.theme);
+  document.querySelectorAll('#theme button').forEach(b => b.classList.toggle('on', b.dataset.t === PREF.theme));
+}
+document.querySelectorAll('#theme button').forEach(b => b.onclick = () => { PREF.theme = b.dataset.t; savePref(); applyTheme(); });
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', applyTheme);
+function drawSchemePop() {
+  const pop = $('#schemePop');
+  pop.innerHTML = '<h2 class="label">COLOUR SCHEME</h2>' + schemePicker(PREF.scheme);
+  pop.querySelectorAll('.sw').forEach(b => b.onclick = () => { PREF.scheme = b.dataset.k; savePref(); applyTheme(); drawSchemePop(); });
+}
+$('#schemeBtn').onclick = e => { e.stopPropagation(); const pop = $('#schemePop'); pop.classList.toggle('hidden'); if (!pop.classList.contains('hidden')) drawSchemePop(); };
+document.addEventListener('click', e => { if (!e.target.closest('.scheme')) $('#schemePop').classList.add('hidden'); });
+applyTheme();
+
+/* ---------- api ---------- */
+async function rpc(fn, body = {}) {
+  const r = await fetch(SB_URL + fn, { method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const t = await r.text();
+  if (!r.ok) { let m = 'Something went wrong.'; try { m = JSON.parse(t).message || m; } catch (e) {} throw new Error(m); }
+  return t ? JSON.parse(t) : null;
+}
+let PW = '';
+try { PW = sessionStorage.getItem('lp-admin-pw') || ''; } catch (e) {}
+async function admin(action, args = {}) {
+  const res = await rpc('lp_admin', { p_pw: PW, p_action: action, p_args: args });
+  if (res && res.error) {
+    if (res.error === 'Wrong password.' && action !== 'login') logout('Your session ended. Log in again.');
+    throw new Error(res.error);
+  }
+  return res;
+}
+async function msg(action, args = {}) {
+  const res = await rpc('lp_admin_msg', { p_pw: PW, p_action: action, p_args: args });
+  if (res && res.error) {
+    if (res.error === 'Wrong password.') logout('Your session ended. Log in again.');
+    throw new Error(res.error);
+  }
+  return res;
+}
+let MSG_TO = null; // {id, name} when messaging one player
+function messagePlayer(id, name) { MSG_TO = { id, name }; DETAIL = null; TAB = 'notices'; showPanel(); }
+async function watch(action, args = {}) {
+  const res = await rpc('lp_admin_watch', { p_pw: PW, p_action: action, p_args: args });
+  if (res && res.error) {
+    if (res.error === 'Wrong password.') logout('Your session ended. Log in again.');
+    throw new Error(res.error);
+  }
+  return res;
+}
+const BOT_RE = /(python|curl|wget|node-fetch|axios|undici|headless|postman|insomnia|go-http|java\/|okhttp|httpclient|deno|bun\/|powershell|libwww|scrapy|aiohttp|httpx|selenium|puppeteer|playwright)/i;
+function describeUA(ua) {
+  if (!ua) return { text: 'No browser info (likely a script)', bot: true };
+  if (BOT_RE.test(ua)) return { text: 'Script / tool: ' + ua.slice(0, 40), bot: true };
+  const b = /Edg\//.test(ua) ? 'Edge' : /OPR\/|Opera/.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /Firefox\//.test(ua) ? 'Firefox'
+    : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Unknown browser';
+  const o = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /CrOS/.test(ua) ? 'Chromebook'
+    : /Windows/.test(ua) ? 'Windows' : /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Unknown system';
+  return { text: b + ' · ' + o, bot: false };
+}
+function secs(ms) { return ms == null ? '—' : (ms / 1000).toFixed(1) + 's'; }
+async function tools(action, args = {}) {
+  const res = await rpc('lp_admin_tools', { p_pw: PW, p_action: action, p_args: args });
+  if (res && res.error) {
+    if (res.error === 'Wrong password.') logout('Your session ended. Log in again.');
+    throw new Error(res.error);
+  }
+  return res;
+}
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2000); }
+function ago(ts) {
+  if (!ts) return '—';
+  const s = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (s < 60) return Math.max(1, Math.round(s)) + 's ago';
+  if (s < 3600) return Math.round(s / 60) + 'm ago';
+  if (s < 86400) return Math.round(s / 3600) + 'h ago';
+  return Math.round(s / 86400) + 'd ago';
+}
+function when(ts) { return ts ? new Date(ts).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'; }
+// two-step confirm buttons (no pop-up dialogs)
+function armed(btn, label, fn) {
+  btn.onclick = async () => {
+    if (!btn.classList.contains('armed')) {
+      btn.dataset.orig = btn.textContent; btn.classList.add('armed'); btn.textContent = label;
+      setTimeout(() => { if (btn.isConnected && btn.classList.contains('armed')) { btn.classList.remove('armed'); btn.textContent = btn.dataset.orig; } }, 3000);
+      return;
+    }
+    btn.disabled = true;
+    try { await fn(); } catch (e) { toast(e.message); btn.disabled = false; }
+  };
+}
+
+/* ---------- login / setup ---------- */
+function logout(msg) {
+  PW = ''; try { sessionStorage.removeItem('lp-admin-pw'); } catch (e) {}
+  clearInterval(window.__tick);
+  showLogin(msg);
+}
+async function showLogin(msg = '') {
+  let configured = true;
+  try { configured = (await rpc('lp_admin_status')).configured; } catch (e) {}
+  if (!configured) return showSetup();
+  $('#app').innerHTML = `
+    <form class="card login" id="loginForm" autocomplete="on">
+      <h2 class="label">LOG IN</h2>
+      <p>Only people with an admin password can use this page.</p>
+      <input type="text" name="username" value="admin" autocomplete="username" hidden>
+      <div class="field"><label for="pw">PASSWORD</label><input id="pw" type="password" autocomplete="current-password" required></div>
+      <button class="btn primary" type="submit">Log in</button>
+      <div class="err" id="err">${esc(msg)}</div>
+    </form>`;
+  $('#pw').focus();
+  $('#loginForm').onsubmit = async e => {
+    e.preventDefault();
+    const pw = $('#pw').value; $('#err').textContent = '';
+    try {
+      const r = await rpc('lp_admin', { p_pw: pw, p_action: 'login', p_args: {} });
+      if (r.error) throw new Error(r.error);
+      PW = pw; try { sessionStorage.setItem('lp-admin-pw', pw); } catch (e) {}
+      showPanel();
+    } catch (err) { $('#err').textContent = err.message; $('#pw').select(); }
+  };
+}
+function showSetup() {
+  $('#app').innerHTML = `
+    <form class="card login" id="setupForm" autocomplete="off">
+      <h2 class="label">FIRST-TIME SETUP</h2>
+      <p>Enter the one-off setup code, then choose your admin password (at least 8 characters). The code stops working once a password is set.</p>
+      <div class="field"><label for="code">SETUP CODE</label><input id="code" autocomplete="off" spellcheck="false" required></div>
+      <div class="field"><label for="np">NEW PASSWORD</label><input id="np" type="password" autocomplete="new-password" minlength="8" required></div>
+      <div class="field"><label for="np2">CONFIRM PASSWORD</label><input id="np2" type="password" autocomplete="new-password" minlength="8" required></div>
+      <button class="btn primary" type="submit">Set password</button>
+      <div class="err" id="err"></div>
+    </form>`;
+  $('#setupForm').onsubmit = async e => {
+    e.preventDefault();
+    const np = $('#np').value;
+    if (np !== $('#np2').value) { $('#err').textContent = "Passwords don't match."; return; }
+    try {
+      const r = await rpc('lp_admin_setup', { p_code: $('#code').value, p_new: np });
+      if (r.error) throw new Error(r.error);
+      PW = np; try { sessionStorage.setItem('lp-admin-pw', np); } catch (e) {}
+      toast('Password set'); showPanel();
+    } catch (err) { $('#err').textContent = err.message; }
+  };
+}
+
+/* ---------- panel ---------- */
+let DETAIL = null;
+let TAB = 'overview', ANS_FILTER = null, PLAYERS = [], P_SORT = { k: 'points', d: -1 }, P_SEARCH = '';
+function showPanel() {
+  $('#app').innerHTML = `
+    <div class="tabs" id="tabs">
+      ${[['overview', 'Overview'], ['players', 'Players'], ['cheats', 'Cheat finder'], ['answers', 'Answers'], ['notices', 'Notifications'], ['tools', 'Tools & database'], ['passwords', 'Passwords']]
+        .map(([k, l]) => `<button class="tab ${TAB === k ? 'on' : ''}" data-k="${k}">${l}</button>`).join('')}
+      <span class="spacer"></span>
+      <button class="btn small" id="refresh">↻ Refresh</button>
+      <button class="btn small" id="logout">Log out</button>
+    </div>
+    <div id="view"></div>`;
+  document.querySelectorAll('.tab').forEach(b => b.onclick = () => { TAB = b.dataset.k; DETAIL = null; showPanel(); });
+  $('#logout').onclick = () => logout('Logged out.');
+  $('#refresh').onclick = () => render();
+  clearInterval(window.__tick);
+  window.__tick = setInterval(() => { if (['overview', 'answers'].includes(TAB) && !document.hidden && !document.activeElement.closest?.('#view input, #view textarea, #view select')) render(true); }, 20000);
+  render();
+}
+async function render(quiet = false) {
+  const v = $('#view');
+  if (!quiet) v.innerHTML = '<p class="muted">Loading…</p>';
+  try {
+    if (TAB === 'overview') await renderOverview(v);
+    else if (TAB === 'players') await renderPlayers(v);
+    else if (TAB === 'answers') await renderAnswers(v);
+    else if (TAB === 'notices') await renderNotices(v);
+    else if (TAB === 'passwords') await renderPasswords(v);
+    else if (TAB === 'tools') await renderTools(v);
+    else if (TAB === 'cheats') await (DETAIL ? renderDetail(v, DETAIL) : renderCheats(v));
+  } catch (e) { if (PW) v.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+}
+
+async function renderOverview(v) {
+  const s = await admin('stats');
+  const maxDay = Math.max(1, ...s.per_day.map(d => d.n));
+  const maxSub = Math.max(1, ...s.by_subject.map(d => d.n));
+  v.innerHTML = `
+    <div class="stats">
+      ${[['PLAYERS', s.players], ['ACTIVE TODAY', s.active_today], ['NEW TODAY', s.new_today], ['ANSWERS TODAY', s.answers_today],
+         ['ANSWERS (ALL TIME)', s.answers_total], ['BANNED', s.banned]].map(([k, n]) => `<div class="stat"><div class="k">${k}</div><div class="v">${Number(n).toLocaleString()}</div></div>`).join('')}
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h2 class="label">ANSWERS PER DAY · LAST 14 DAYS</h2>
+        <div class="bars">${s.per_day.map(d => `<div class="b" title="${d.day}: ${d.n}"><em>${d.n || ''}</em><i style="height:${(d.n / maxDay) * 100}%"></i><span>${new Date(d.day).getDate()}</span></div>`).join('')}</div>
+      </div>
+      <div class="card">
+        <h2 class="label">BY SUBJECT · ANSWERS (AVG PTS)</h2>
+        ${s.by_subject.length ? s.by_subject.map(x => `<div class="hbar"><span>${esc(x.subject)}</span><span class="track"><i style="width:${(x.n / maxSub) * 100}%"></i></span><span class="n">${x.n} (${x.avg})</span></div>`).join('') : '<p class="muted">No answers logged yet. Answers are logged from today onwards.</p>'}
+      </div>
+      <div class="card">
+        <h2 class="label">HARDEST QUESTIONS · MOST 0-POINT ANSWERS</h2>
+        ${s.hardest.length ? s.hardest.map(q => `<div class="list-q"><span>${esc(q.question)} <span class="muted">· ${esc(q.subject)}</span></span><span class="mono">${q.zeros}/${q.n}</span></div>`).join('') : '<p class="muted">Nothing yet.</p>'}
+      </div>
+      <div class="card">
+        <h2 class="label">QUICK ACTIONS</h2>
+        <p class="muted" style="margin-bottom:12px">Let every player take today's papers again (clears the "today's paper done" lock on every device within 30 seconds).</p>
+        <button class="btn danger" id="resetAll">Reset everyone's daily papers</button>
+      </div>
+    </div>`;
+  armed($('#resetAll'), 'Click again to confirm', async () => { await admin('reset_everyone'); toast('Everyone can retake today’s papers'); render(); });
+}
+
+function flagFor(p) {
+  const avg = p.answered ? p.points / p.answered : 0;
+  if (p.banned) return '<span class="pill bad">BANNED</span>';
+  if (p.answered >= 20 && avg >= 45) return '<span class="pill warn" title="Very high average: possible cheating">⚠ SUSPICIOUS</span>';
+  return '<span class="pill good">OK</span>';
+}
+async function renderPlayers(v) {
+  PLAYERS = await admin('players');
+  v.innerHTML = `
+    <div class="toolbar">
+      <input id="psearch" placeholder="Search names…" value="${esc(P_SEARCH)}">
+      <span class="muted" id="pcount"></span>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th data-k="name">NAME</th><th data-k="status">STATUS</th><th class="num" data-k="answered">ANSWERED</th>
+        <th class="num" data-k="points">POINTS</th><th class="num" data-k="avg">AVG</th><th class="num" data-k="today">TODAY</th>
+        <th data-k="last">LAST SEEN</th><th></th>
+      </tr></thead><tbody id="pbody"></tbody></table></div>`;
+  $('#psearch').oninput = e => { P_SEARCH = e.target.value; drawPlayers(); };
+  document.querySelectorAll('th[data-k]').forEach(th => th.onclick = () => {
+    const k = th.dataset.k; P_SORT = { k, d: P_SORT.k === k ? -P_SORT.d : (k === 'name' ? 1 : -1) }; drawPlayers();
+  });
+  drawPlayers();
+}
+function drawPlayers() {
+  const q = P_SEARCH.trim().toLowerCase();
+  const val = (p, k) => k === 'avg' ? (p.answered ? p.points / p.answered : 0) : k === 'status' ? (p.banned ? 2 : (p.answered >= 20 && p.points / p.answered >= 45 ? 1 : 0))
+    : k === 'last' ? new Date(p.last || 0).getTime() : k === 'name' ? p.name.toLowerCase() : p[k];
+  const rows = PLAYERS.filter(p => !q || p.name.toLowerCase().includes(q))
+    .sort((a, b) => { const x = val(a, P_SORT.k), y = val(b, P_SORT.k); return (x > y ? 1 : x < y ? -1 : 0) * P_SORT.d; });
+  $('#pcount').textContent = `${rows.length} of ${PLAYERS.length} players`;
+  $('#pbody').innerHTML = rows.map(p => `<tr class="${p.banned ? 'banned' : ''}" data-id="${p.id}">
+      <td><button class="linkish view">${esc(p.name)}</button></td><td>${flagFor(p)}</td>
+      <td class="num">${p.answered}</td><td class="num">${p.points}</td><td class="num">${p.answered ? Math.round(p.points / p.answered) : '—'}</td>
+      <td class="num">${p.today}</td><td class="muted" title="${when(p.last)}">${ago(p.last)}</td>
+      <td class="acts">
+        <button class="btn small info">Info</button>
+        <button class="btn small dm" title="Send this player a private message">Message</button>
+        <button class="btn small edit">Edit</button>
+        <button class="btn small ${p.banned ? '' : 'danger'} ban">${p.banned ? 'Unban' : 'Ban'}</button>
+        <button class="btn small danger remove">Remove</button>
+      </td></tr>`).join('') || '<tr><td colspan="8" class="muted">No players found.</td></tr>';
+  document.querySelectorAll('#pbody tr[data-id]').forEach(tr => {
+    const id = +tr.dataset.id, p = PLAYERS.find(x => x.id === id);
+    tr.querySelector('.view').onclick = () => { ANS_FILTER = { id, name: p.name }; TAB = 'answers'; showPanel(); };
+    tr.querySelector('.edit').onclick = () => openEditor(tr, p);
+    tr.querySelector('.info').onclick = () => { DETAIL = id; TAB = 'cheats'; showPanel(); };
+    tr.querySelector('.dm').onclick = () => messagePlayer(id, p.name);
+    const ban = tr.querySelector('.ban');
+    ban.onclick = async () => {
+      ban.disabled = true;
+      try { await admin(p.banned ? 'unban' : 'ban', { id }); p.banned = !p.banned; toast(`${p.name} ${p.banned ? 'banned' : 'unbanned'}`); drawPlayers(); }
+      catch (e) { toast(e.message); ban.disabled = false; }
+    };
+    armed(tr.querySelector('.remove'), 'Sure? Click again', async () => {
+      await admin('remove', { id }); PLAYERS = PLAYERS.filter(x => x.id !== id); toast(`${p.name} removed`); drawPlayers();
+    });
+  });
+}
+
+function openEditor(tr, p) {
+  document.querySelectorAll('tr.editor').forEach(r => r.remove());
+  const ed = document.createElement('tr');
+  ed.className = 'editor';
+  ed.innerHTML = `<td colspan="8"><div class="edit-grid">
+      <div class="field"><label>NAME</label><input class="e-name" maxlength="20" value="${esc(p.name)}"></div>
+      <div class="field"><label>POINTS</label><input class="e-points" type="number" min="0" value="${p.points}"></div>
+      <div class="field"><label>ANSWERED</label><input class="e-ans" type="number" min="0" value="${p.answered}"></div>
+      <div class="field"><label>QUICK ADJUST</label><div class="quick">
+        ${[-100, -50, 50, 100].map(d => `<button class="btn small qa" data-d="${d}">${d > 0 ? '+' : ''}${d}</button>`).join('')}</div></div>
+    </div>
+    <div class="toolbar" style="margin:10px 0 0">
+      <button class="btn small primary e-save">Save changes</button>
+      <button class="btn small e-unlock" title="Reset today's 150-answer cap and the 3-second timer for this player">Unlock today's limit</button>
+      <button class="btn small e-cancel">Cancel</button>
+      <span class="err e-err"></span>
+    </div></td>`;
+  tr.after(ed);
+  ed.querySelectorAll('.qa').forEach(b => b.onclick = () => { const i = ed.querySelector('.e-points'); i.value = Math.max(0, (+i.value || 0) + +b.dataset.d); });
+  ed.querySelector('.e-cancel').onclick = () => ed.remove();
+  ed.querySelector('.e-unlock').onclick = async () => { try { await tools('unlock_day', { id: p.id }); toast(`${p.name}'s daily limit reset`); } catch (e) { ed.querySelector('.e-err').textContent = e.message; } };
+  ed.querySelector('.e-save').onclick = async () => {
+    const name = ed.querySelector('.e-name').value.trim(), points = ed.querySelector('.e-points').value, answered = ed.querySelector('.e-ans').value;
+    try {
+      await tools('edit_player', { id: p.id, name, points, answered });
+      Object.assign(p, { name: name || p.name, points: +points, answered: +answered });
+      toast('Saved'); drawPlayers();
+    } catch (e) { ed.querySelector('.e-err').textContent = e.message; }
+  };
+}
+
+async function renderAnswers(v) {
+  const list = await watch('answers', ANS_FILTER ? { id: ANS_FILTER.id, limit: 300 } : { limit: 150 });
+  v.innerHTML = `
+    <div class="toolbar">
+      ${ANS_FILTER ? `<span>Showing answers from <b>${esc(ANS_FILTER.name)}</b></span><button class="btn small" id="clearf">Show everyone</button>`
+                   : `<span class="muted">Latest answers from everyone · refreshes every 20s · click a name to filter</span>`}
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>WHEN</th><th>PLAYER</th><th>SUBJECT</th><th>QUESTION</th><th>ANSWER</th><th class="num">TIME</th><th class="num">PTS</th><th></th></tr></thead>
+      <tbody>${list.map(a => `<tr>
+        <td class="muted" title="${when(a.at)}" style="white-space:nowrap">${ago(a.at)}</td>
+        <td><button class="linkish pf" data-id="${a.player_id}" data-name="${esc(a.name || '')}">${esc(a.name || '(removed)')}</button></td>
+        <td class="muted">${esc(a.subject || '')}</td>
+        <td>${esc(a.question || '')}</td>
+        <td>${esc(a.answer || '')}${a.wrong ? `<div class="wrongs">tried: ${esc(a.wrong)}</div>` : ''}</td>
+        <td class="num ${a.ms != null && a.ms < 2000 ? 'bad-t' : ''}">${a.site ? secs(a.ms) : '<span class="pill bad" title="Sent straight to the database, not through the website">NOT VIA SITE</span>'}</td>
+        <td class="num">${a.points}</td>
+        <td class="acts"><button class="btn small danger del" data-id="${a.id}" title="Delete this answer and take its points off the player">✕</button></td></tr>`).join('') || '<tr><td colspan="8" class="muted">No answers logged yet. Answers are logged from today onwards.</td></tr>'}
+      </tbody></table></div>`;
+  $('#clearf')?.addEventListener('click', () => { ANS_FILTER = null; render(); });
+  document.querySelectorAll('.pf').forEach(b => b.onclick = () => { if (!b.dataset.name) return; ANS_FILTER = { id: +b.dataset.id, name: b.dataset.name }; render(); });
+  document.querySelectorAll('.del').forEach(b => armed(b, 'Delete?', async () => {
+    const r = await tools('delete_answer', { id: +b.dataset.id, refund: true });
+    toast(`Answer deleted (−${r.points_removed} pts)`); b.closest('tr').remove();
+  }));
+}
+
+async function renderNotices(v) {
+  const [list, players] = await Promise.all([msg('list'), admin('players')]);
+  const tag = { info: 'ANNOUNCEMENT', warning: 'WARNING', success: 'NEWS' };
+  const one = !!MSG_TO;
+  v.innerHTML = `
+    <div class="grid2">
+      <form class="card" id="nform">
+        <h2 class="label">SEND A MESSAGE</h2>
+        <div class="seg" role="radiogroup" aria-label="Who to send to">
+          <button type="button" class="segb ${one ? '' : 'on'}" data-to="all" role="radio" aria-checked="${!one}">📢 Everyone</button>
+          <button type="button" class="segb ${one ? 'on' : ''}" data-to="one" role="radio" aria-checked="${one}">✉️ One player (private)</button>
+        </div>
+        <div class="field ${one ? '' : 'hidden'}" id="toWrap"><label for="nto">PLAYER</label>
+          <input id="nto" list="nplayers" autocomplete="off" placeholder="Start typing a name…" value="${one ? esc(MSG_TO.name) : ''}">
+          <datalist id="nplayers">${players.map(p => `<option value="${esc(p.name)}">`).join('')}</datalist>
+          <div class="muted" style="margin-top:4px">Only this player will see it. You'll see when they've read it.</div></div>
+        <div class="field"><label for="nmsg">MESSAGE</label><textarea id="nmsg" maxlength="500" placeholder="${one ? 'e.g. Stop using a script or you\'ll be banned.' : 'e.g. Mock exams start Monday. Good luck!'}"></textarea></div>
+        <div class="toolbar">
+          <select id="nkind"><option value="info">Announcement (blue)</option><option value="warning">Warning (red)</option><option value="success">News (green)</option></select>
+          <select id="nmins"><option value="60">Show for 1 hour</option><option value="1440" selected>Show for 1 day</option><option value="10080">Show for 1 week</option><option value="0">Until I end it</option></select>
+        </div>
+        <label class="check"><input type="checkbox" id="npop" checked><span>Pop up in the middle of their screen (they have to click "Got it")</span></label>
+        <div class="preview" id="npreview"></div>
+        <div class="toolbar" style="margin-top:12px"><button class="btn primary" type="submit" id="nsend">${one ? 'Send privately' : 'Send to everyone'}</button>
+          <span class="muted">Shows up within 15 seconds. Popups wait until they've finished the question they're on.</span></div>
+      </form>
+      <div class="card">
+        <h2 class="label">SENT MESSAGES</h2>
+        <div class="row-gap">${list.map(n => `<div class="list-q"><span>
+            ${n.active ? '<span class="pill good">LIVE</span>' : '<span class="pill">ENDED</span>'}
+            ${n.to_id ? `<span class="pill warn">✉️ TO ${esc(n.to || 'deleted player')}</span>` : `<span class="pill">📢 EVERYONE</span>`}
+            <span class="pill">${tag[n.kind] || 'ANNOUNCEMENT'}</span>${n.popup ? ' <span class="pill">POPUP</span>' : ''}
+            <div style="margin-top:4px">${esc(n.message)}</div>
+            <div class="muted">${when(n.created)}${n.expires ? ' → ' + when(n.expires) : ''}${n.to_id ? (n.read ? ` · <b class="good-t">Read ✓ ${ago(n.read)}</b>` : ' · Not read yet') : ''}</div></span>
+            ${n.active ? `<button class="btn small danger end" data-id="${n.id}">End</button>` : '<span></span>'}</div>`).join('') || '<p class="muted">None sent yet.</p>'}</div>
+      </div>
+    </div>`;
+  let toOne = one;
+  const prev = () => {
+    const m = $('#nmsg').value.trim(), k = $('#nkind').value;
+    const t = toOne ? '✉ PRIVATE MESSAGE' : '📢 ' + tag[k];
+    $('#npreview').innerHTML = m ? `<div class="notice ${k}${toOne ? ' private' : ''}"><span class="tag">${t}</span><span class="ntext">${esc(m)}</span></div>` : '';
+  };
+  document.querySelectorAll('.segb').forEach(b => b.onclick = () => {
+    toOne = b.dataset.to === 'one';
+    document.querySelectorAll('.segb').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', x === b); });
+    $('#toWrap').classList.toggle('hidden', !toOne);
+    $('#nsend').textContent = toOne ? 'Send privately' : 'Send to everyone';
+    if (toOne) $('#nto').focus(); else MSG_TO = null;
+    prev();
+  });
+  $('#nmsg').oninput = prev; $('#nkind').onchange = prev;
+  $('#nform').onsubmit = async e => {
+    e.preventDefault();
+    const args = { message: $('#nmsg').value, kind: $('#nkind').value, minutes: $('#nmins').value, popup: $('#npop').checked };
+    if (toOne) {
+      const name = $('#nto').value.trim();
+      if (!name) return toast('Pick a player first.');
+      if (MSG_TO && MSG_TO.name === name) args.id = MSG_TO.id; else args.to = name;
+    }
+    try { const r = await msg('send', args); toast(toOne ? `Sent privately to ${r.to}` : 'Sent to everyone'); MSG_TO = null; render(); }
+    catch (err) { toast(err.message); }
+  };
+  document.querySelectorAll('.end').forEach(b => b.onclick = async () => { b.disabled = true; try { await msg('end', { id: +b.dataset.id }); toast('Message ended'); render(); } catch (e) { toast(e.message); } });
+}
+
+/* ---------- cheat finder ---------- */
+function riskPill(score) {
+  return score >= 4 ? '<span class="pill bad">HIGH RISK</span>' : score >= 2 ? '<span class="pill warn">MEDIUM</span>' : '<span class="pill">LOW</span>';
+}
+async function renderCheats(v) {
+  const r = await watch('suspects');
+  v.innerHTML = `
+    <p class="muted" style="margin-bottom:12px">Players flagged by the cheat checks, most suspicious first. Device, network and timing data is collected from ${when(r.since)} onwards, so older activity only shows score-based flags. Same network on its own isn't proof, because a whole school shares one Wi-Fi.</p>
+    <div class="row-gap">${r.list.map(x => `
+      <div class="card sus" data-id="${x.id}">
+        <div class="sus-head"><span><b>${esc(x.name)}</b> ${riskPill(x.score)} <span class="muted">· ${x.points} pts · ${x.answered} answers · seen ${ago(x.last)}</span></span>
+          <span class="acts"><button class="btn small det">Details</button>
+          <button class="btn small dm">Message</button>
+          <button class="btn small danger ban1">Ban</button>
+          <button class="btn small danger banall" title="Ban this player and every account used on the same device">Ban + same-device accounts</button></span></div>
+        <ul class="reasons">${x.reasons.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+      </div>`).join('') || '<div class="card"><p class="muted">Nobody flagged right now. 🎉</p></div>'}</div>`;
+  document.querySelectorAll('.sus').forEach(c => {
+    const id = +c.dataset.id, name = c.querySelector('b').textContent;
+    c.querySelector('.det').onclick = () => { DETAIL = id; render(); };
+    c.querySelector('.dm').onclick = () => messagePlayer(id, name);
+    armed(c.querySelector('.ban1'), 'Click again', async () => { await admin('ban', { id }); toast(`${name} banned`); render(); });
+    armed(c.querySelector('.banall'), 'Sure? Click again', async () => { const r = await watch('ban_linked', { id }); toast(`Banned ${r.count} account${r.count === 1 ? '' : 's'}`); render(); });
+  });
+}
+async function renderDetail(v, id) {
+  const d = await watch('detail', { id });
+  if (!d.player) { DETAIL = null; return renderCheats(v); }
+  const p = d.player, sp = d.speed || {};
+  v.innerHTML = `
+    <div class="toolbar"><button class="btn small" id="back">← Back to cheat finder</button></div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="sus-head"><span><b style="font-size:20px">${esc(p.name)}</b> ${p.banned ? '<span class="pill bad">BANNED</span>' : ''}
+        <span class="muted">· ${p.points} pts · ${p.answered} answers · joined ${when(p.created)}</span></span>
+        <span class="acts"><button class="btn small" id="seeAns">See their answers</button>
+        <button class="btn small" id="dmOne">Message</button>
+        ${p.banned ? '<button class="btn small" id="unban">Unban</button>' : '<button class="btn small danger" id="ban1">Ban</button>'}
+        <button class="btn small danger" id="banall">Ban + same-device accounts</button></span></div>
+    </div>
+    <div class="stats">
+      ${[['TIMED ANSWERS', sp.timed ?? 0], ['TYPICAL TIME', secs(sp.median)], ['FASTEST', secs(sp.fastest)], ['UNDER 2 SECONDS', sp.under2 ?? 0], ['NOT VIA SITE', sp.untimed ?? 0]]
+        .map(([k, n]) => `<div class="stat"><div class="k">${k}</div><div class="v">${n}</div></div>`).join('')}
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h2 class="label">DEVICES & NETWORKS USED</h2>
+        ${d.seen.length ? `<div class="tbl-wrap" style="border-width:1px"><table><thead><tr><th>BROWSER</th><th>DEVICE ID</th><th>NETWORK ID</th><th>LAST SEEN</th><th class="num">TIMES</th></tr></thead><tbody>
+          ${d.seen.map(s => { const u = describeUA(s.ua); return `<tr><td class="${u.bot ? 'bad-t' : ''}" title="${esc(s.ua)}">${esc(u.text)}</td>
+            <td class="mono">${esc(s.device || '—')}</td><td class="mono">${esc(s.network || '—')}</td><td class="muted">${ago(s.last)}</td><td class="num">${s.hits}</td></tr>`; }).join('')}
+          </tbody></table></div>` : `<p class="muted">No device data yet. Tracking started ${when(d.since)}.</p>`}
+        <p class="muted" style="margin-top:8px">IDs are scrambled, so the same ID means the same device or network.</p>
+      </div>
+      <div class="card">
+        <h2 class="label">LINKED ACCOUNTS</h2>
+        ${d.linked.length ? d.linked.map(l => `<div class="list-q"><span><button class="linkish lk" data-id="${l.id}">${esc(l.name)}</button>
+            ${l.device ? '<span class="pill warn">SAME DEVICE</span>' : ''} ${l.network ? '<span class="pill">SAME NETWORK</span>' : ''} ${l.banned ? '<span class="pill bad">BANNED</span>' : ''}
+            <div class="muted">${l.points} pts · ${l.answered} answers</div></span>
+            ${l.banned ? '<span></span>' : `<button class="btn small danger lban" data-id="${l.id}">Ban</button>`}</div>`).join('')
+          : '<p class="muted">No other accounts share a device or network with this player.</p>'}
+      </div>
+    </div>`;
+  $('#back').onclick = () => { DETAIL = null; render(); };
+  $('#dmOne').onclick = () => messagePlayer(p.id, p.name);
+  $('#seeAns').onclick = () => { ANS_FILTER = { id: p.id, name: p.name }; DETAIL = null; TAB = 'answers'; showPanel(); };
+  if ($('#ban1')) armed($('#ban1'), 'Click again', async () => { await admin('ban', { id: p.id }); toast(`${p.name} banned`); render(); });
+  if ($('#unban')) $('#unban').onclick = async () => { await admin('unban', { id: p.id }); toast(`${p.name} unbanned`); render(); };
+  armed($('#banall'), 'Sure? Click again', async () => { const r = await watch('ban_linked', { id: p.id }); toast(`Banned ${r.count} account${r.count === 1 ? '' : 's'}`); render(); });
+  document.querySelectorAll('.lk').forEach(b => b.onclick = () => { DETAIL = +b.dataset.id; render(); });
+  document.querySelectorAll('.lban').forEach(b => armed(b, 'Click again', async () => { await admin('ban', { id: +b.dataset.id }); toast('Banned'); render(); }));
+}
+
+/* ---------- tools & database ---------- */
+const HELP = `Commands (names can be typed in full or just the start):
+  find <text>              list players whose name contains text
+  ban <name>               ban a player          unban <name>
+  remove <name>            delete a player completely
+  points <name> <n>        set a player's points to n
+  add <name> <n>           add n points (use a minus number to take away)
+  answered <name> <n>      set how many questions they've answered
+  rename <name> to <new>   change a player's name
+  unlock <name>            reset their 150-a-day cap and 3-second timer
+  banmatch <text>          ban every name containing text
+  block <word>             block names like word123 (word + numbers)
+  blockword <text>         block names containing text anywhere
+  unblock <word>           remove a block
+  notify <message>         pop-up announcement to everyone (1 day)
+  dm <name>: <message>     private pop-up message to one player
+  warn <message>           send a red warning to everyone (1 day)
+  reset                    let everyone retake today's papers
+  clear                    clear this console`;
+let CON_LOG = [];
+async function renderTools(v) {
+  const blocked = await tools('blocked');
+  v.innerHTML = `
+    <div class="grid2">
+      <div class="card" style="grid-column: 1 / -1">
+        <h2 class="label">COMMAND CONSOLE</h2>
+        <div class="console" id="conOut"></div>
+        <form class="toolbar" id="conForm" style="margin:10px 0 0" autocomplete="off">
+          <input id="conIn" placeholder="Type a command, e.g.  points ollie 500   ·   type help for the list" spellcheck="false" autocapitalize="off">
+          <button class="btn primary" type="submit" style="flex:none">Run</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2 class="label">BLOCKED USERNAMES</h2>
+        <p class="muted" style="margin-bottom:10px">New players can't pick these names. Existing players aren't affected (use "Ban all matching" for those).</p>
+        ${blocked.map(b => `<div class="list-q"><span><b>${esc(b.pattern)}</b> <span class="pill">${b.kind === 'contains' ? 'ANYWHERE IN NAME' : 'WORD + NUMBERS'}</span></span>
+          <button class="btn small danger unb" data-id="${b.id}">Remove</button></div>`).join('') || '<p class="muted">Nothing blocked.</p>'}
+        <form class="toolbar" id="blkForm" style="margin-top:12px">
+          <input id="blkText" placeholder="e.g. hamz" maxlength="40">
+          <select id="blkKind"><option value="prefix_number">Word + numbers (hamz1, hamz22…)</option><option value="contains">Anywhere in the name</option></select>
+          <button class="btn small primary" type="submit">Block</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2 class="label">BULK ACTIONS</h2>
+        <div class="field"><label>BAN EVERY PLAYER WHOSE NAME CONTAINS…</label>
+          <div class="toolbar" style="margin:0"><input id="bmText" placeholder="e.g. bot"><button class="btn small danger" id="bmGo">Ban all matching</button></div></div>
+        <div class="field" style="margin-top:10px"><label>CLEAN UP</label>
+          <div><button class="btn small danger" id="purge">Delete all banned players</button></div>
+          <span class="muted">Deleted players disappear from the database completely. They'd be able to re-register, so banning is usually better.</span></div>
+        <div class="field" style="margin-top:10px"><label>RAW DATABASE</label>
+          <div class="toolbar" style="margin:0">
+            <a class="btn small" href="https://supabase.com/dashboard/project/wtedtqaiyormmfilqmja/editor" target="_blank" rel="noopener">Open table editor ↗</a>
+            <a class="btn small" href="https://supabase.com/dashboard/project/wtedtqaiyormmfilqmja/sql/new" target="_blank" rel="noopener">Open SQL editor ↗</a>
+          </div>
+          <span class="muted">For anything the panel can't do, Supabase lets you edit any table directly or run SQL (needs your Supabase login).</span></div>
+      </div>
+    </div>`;
+  drawConsole();
+  $('#conForm').onsubmit = async e => { e.preventDefault(); const cmd = $('#conIn').value.trim(); if (!cmd) return; $('#conIn').value = ''; await runCommand(cmd); };
+  $('#conIn').focus();
+  document.querySelectorAll('.unb').forEach(b => armed(b, 'Sure?', async () => { await tools('remove_block', { id: +b.dataset.id }); toast('Block removed'); render(); }));
+  $('#blkForm').onsubmit = async e => { e.preventDefault(); try { await tools('add_block', { pattern: $('#blkText').value, kind: $('#blkKind').value }); toast('Blocked'); render(); } catch (err) { toast(err.message); } };
+  armed($('#bmGo'), 'Click again to ban', async () => { const r = await tools('ban_matching', { text: $('#bmText').value }); toast(`Banned ${r.count} player${r.count === 1 ? '' : 's'}`); render(); });
+  armed($('#purge'), 'Sure? Click again', async () => { const r = await tools('purge_banned'); toast(`Deleted ${r.count} banned player${r.count === 1 ? '' : 's'}`); render(); });
+}
+function drawConsole() {
+  const o = $('#conOut'); if (!o) return;
+  o.innerHTML = (CON_LOG.length ? CON_LOG : [{ k: 'out', t: 'Type help to see every command.' }]).map(l => `<div class="${l.k}">${esc(l.t)}</div>`).join('');
+  o.scrollTop = o.scrollHeight;
+}
+function say(t, k = 'out') { CON_LOG.push({ k, t }); CON_LOG = CON_LOG.slice(-200); drawConsole(); }
+async function findPlayer(q) {
+  if (!PLAYERS.length) PLAYERS = await admin('players');
+  const l = q.trim().toLowerCase();
+  const exact = PLAYERS.filter(p => p.name.toLowerCase() === l);
+  if (exact.length === 1) return exact[0];
+  const starts = PLAYERS.filter(p => p.name.toLowerCase().startsWith(l));
+  if (starts.length === 1) return starts[0];
+  const has = PLAYERS.filter(p => p.name.toLowerCase().includes(l));
+  if (has.length === 1) return has[0];
+  if (!has.length) throw new Error(`No player matches "${q}".`);
+  throw new Error(`"${q}" matches ${has.length} players: ${has.slice(0, 8).map(p => p.name).join(', ')}${has.length > 8 ? '…' : ''}. Be more specific.`);
+}
+async function runCommand(line) {
+  say('> ' + line, 'in');
+  const [cmd0, ...rest] = line.split(/\s+/); const cmd = cmd0.toLowerCase(); const arg = rest.join(' ');
+  const numTail = () => { const m = arg.match(/^(.*\S)\s+(-?\d+)$/); if (!m) throw new Error('Put a name, then a number. e.g. ' + cmd + ' ollie 100'); return [m[1], +m[2]]; };
+  try {
+    PLAYERS = await admin('players');
+    if (cmd === 'help' || cmd === '?') { HELP.split('\n').forEach(t => say(t)); return; }
+    if (cmd === 'clear') { CON_LOG = []; drawConsole(); return; }
+    if (cmd === 'find') {
+      const l = arg.toLowerCase(); const m = PLAYERS.filter(p => p.name.toLowerCase().includes(l));
+      if (!m.length) return say('No matches.');
+      m.slice(0, 30).forEach(p => say(`${p.name.padEnd(22)} ${String(p.points).padStart(6)} pts  ${String(p.answered).padStart(4)} answered${p.banned ? '  [BANNED]' : ''}`));
+      if (m.length > 30) say(`…and ${m.length - 30} more`); return;
+    }
+    if (['ban', 'unban', 'remove', 'unlock'].includes(cmd)) {
+      const p = await findPlayer(arg);
+      if (cmd === 'unlock') await tools('unlock_day', { id: p.id }); else await admin(cmd, { id: p.id });
+      return say(`✓ ${cmd === 'unlock' ? 'Reset daily limit for' : cmd === 'remove' ? 'Removed' : cmd === 'ban' ? 'Banned' : 'Unbanned'} ${p.name}`, 'ok');
+    }
+    if (cmd === 'points' || cmd === 'answered') {
+      const [name, n] = numTail(); const p = await findPlayer(name);
+      await tools('edit_player', { id: p.id, [cmd]: n });
+      return say(`✓ ${p.name}: ${cmd} set to ${n} (was ${p[cmd]})`, 'ok');
+    }
+    if (cmd === 'add') {
+      const [name, n] = numTail(); const p = await findPlayer(name);
+      await tools('add_points', { id: p.id, delta: n });
+      return say(`✓ ${p.name}: ${p.points} → ${Math.max(0, p.points + n)} pts`, 'ok');
+    }
+    if (cmd === 'rename') {
+      const m = arg.match(/^(.*\S)\s+to\s+(.+)$/i); if (!m) throw new Error('Use: rename oldname to newname');
+      const p = await findPlayer(m[1]); await tools('edit_player', { id: p.id, name: m[2].trim() });
+      return say(`✓ Renamed ${p.name} to ${m[2].trim()}`, 'ok');
+    }
+    if (cmd === 'banmatch') { const r = await tools('ban_matching', { text: arg }); return say(`✓ Banned ${r.count} player(s) containing "${arg}"`, 'ok'); }
+    if (cmd === 'block' || cmd === 'blockword') { await tools('add_block', { pattern: arg, kind: cmd === 'block' ? 'prefix_number' : 'contains' }); say(`✓ Blocked "${arg}"`, 'ok'); return render(true); }
+    if (cmd === 'unblock') {
+      const list = await tools('blocked'); const b = list.find(x => x.pattern.toLowerCase() === arg.toLowerCase());
+      if (!b) throw new Error(`"${arg}" isn't blocked.`); await tools('remove_block', { id: b.id }); say(`✓ Unblocked "${arg}"`, 'ok'); return render(true);
+    }
+    if (cmd === 'dm' || cmd === 'message' || cmd === 'msg') {
+      const i = arg.indexOf(':');
+      if (i < 1 || !arg.slice(i + 1).trim()) throw new Error('Use: dm <name>: <message>');
+      const p = await findPlayer(arg.slice(0, i).trim());
+      await msg('send', { id: p.id, message: arg.slice(i + 1).trim(), kind: 'info', minutes: 10080, popup: true });
+      return say(`✓ Sent ${p.name} a private message (pops up, shows for 1 week)`, 'ok');
+    }
+    if (cmd === 'notify' || cmd === 'warn') {
+      if (!arg) throw new Error('Write a message after the command.');
+      await msg('send', { message: arg, kind: cmd === 'warn' ? 'warning' : 'info', minutes: 1440, popup: true });
+      return say('✓ Sent to everyone (shows for 1 day)', 'ok');
+    }
+    if (cmd === 'reset') { await admin('reset_everyone'); return say('✓ Everyone can retake today\'s papers', 'ok'); }
+    throw new Error(`Unknown command "${cmd0}". Type help.`);
+  } catch (e) { say('✗ ' + e.message, 'bad'); }
+}
+
+async function renderPasswords(v) {
+  const list = await admin('passwords');
+  v.innerHTML = `
+    <div class="grid2">
+      <div class="card">
+        <h2 class="label">ADMIN PASSWORDS</h2>
+        <p class="muted" style="margin-bottom:10px">Any of these passwords can log in. Passwords are stored scrambled and can't be viewed, only added or removed.</p>
+        ${list.map(p => `<div class="list-q"><span><b>${esc(p.label)}</b><div class="muted">added ${when(p.created)}</div></span>
+          <button class="btn small danger rm" data-id="${p.id}" ${list.length <= 1 ? 'disabled title="You need at least one password"' : ''}>Remove</button></div>`).join('')}
+      </div>
+      <form class="card" id="pform" autocomplete="off">
+        <h2 class="label">ADD A PASSWORD</h2>
+        <div class="field"><label for="plabel">LABEL (SO YOU KNOW WHICH IS WHICH)</label><input id="plabel" maxlength="40" placeholder="e.g. Phone, Backup"></div>
+        <div class="field"><label for="pnew">NEW PASSWORD (8+ CHARACTERS)</label><input id="pnew" type="password" autocomplete="new-password" minlength="8" required></div>
+        <div class="field"><label for="pnew2">CONFIRM</label><input id="pnew2" type="password" autocomplete="new-password" minlength="8" required></div>
+        <button class="btn primary" type="submit">Add password</button>
+        <div class="err" id="perr"></div>
+      </form>
+    </div>`;
+  document.querySelectorAll('.rm').forEach(b => armed(b, 'Sure? Click again', async () => { await admin('remove_password', { id: +b.dataset.id }); toast('Password removed'); render(); }));
+  $('#pform').onsubmit = async e => {
+    e.preventDefault();
+    if ($('#pnew').value !== $('#pnew2').value) { $('#perr').textContent = "Passwords don't match."; return; }
+    try { await admin('add_password', { label: $('#plabel').value, password: $('#pnew').value }); toast('Password added'); render(); }
+    catch (err) { $('#perr').textContent = err.message; }
+  };
+}
+
+/* ---------- start ---------- */
+(async () => {
+  if (PW) {
+    try { const r = await rpc('lp_admin', { p_pw: PW, p_action: 'login', p_args: {} }); if (!r.error) return showPanel(); } catch (e) {}
+    PW = '';
+  }
+  showLogin();
+})();
+</script>
+</body>
+</html>
