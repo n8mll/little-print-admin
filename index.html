@@ -145,6 +145,7 @@
     .page::before { left: 14px; }
     .hbar { grid-template-columns: 100px 1fr 56px; }
   }
+  .credit { position: fixed; right: 10px; bottom: 8px; z-index: 30; font: 600 11px 'JetBrains Mono', monospace; letter-spacing: .06em; color: var(--muted); background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 3px 7px; opacity: .85; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -872,5 +873,6 @@ async function renderPasswords(v) {
   showLogin();
 })();
 </script>
+<div class="credit">areeves</div>
 </body>
 </html>
