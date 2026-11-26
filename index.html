@@ -98,6 +98,7 @@
   td.acts .btn { margin-left: 4px; }
   .pill { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: .08em; padding: 3px 7px; border-radius: 99px; background: var(--chip); color: var(--ink-2); }
   .pill.bad { background: var(--red); color: #fff; }
+  .pill.ok { background: var(--green, #2f8a4f); color: #fff; }
   .pill.warn { background: color-mix(in srgb, var(--red) 18%, transparent); color: var(--red); }
   .pill.good { background: var(--done-bg); color: var(--green); }
   .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
@@ -269,6 +270,15 @@ async function msg(action, args = {}) {
 }
 let MSG_TO = null; // {id, name} when messaging one player
 function messagePlayer(id, name) { MSG_TO = { id, name }; DETAIL = null; TAB = 'notices'; showPanel(); }
+async function appeals(action, args = {}) {
+  const res = await rpc('lp_admin_appeals', { p_pw: PW, p_action: action, p_args: args });
+  if (res && res.error) {
+    if (res.error === 'Wrong password.') logout('Your session ended. Log in again.');
+    throw new Error(res.error);
+  }
+  return res;
+}
+let AP_FILTER = '';
 async function watch(action, args = {}) {
   const res = await rpc('lp_admin_watch', { p_pw: PW, p_action: action, p_args: args });
   if (res && res.error) {
@@ -388,7 +398,7 @@ let TAB = 'overview', ANS_FILTER = null, PLAYERS = [], P_SORT = { k: 'points', d
 function showPanel() {
   $('#app').innerHTML = `
     <div class="tabs" id="tabs">
-      ${[['overview', 'Overview'], ['players', 'Players'], ['cheats', 'Cheat finder'], ['answers', 'Answers'], ['notices', 'Notifications'], ['tools', 'Tools & database'], ['passwords', 'Passwords']]
+      ${[['overview', 'Overview'], ['players', 'Players'], ['cheats', 'Cheat finder'], ['answers', 'Answers'], ['appeals', 'Appeals'], ['notices', 'Notifications'], ['tools', 'Tools & database'], ['passwords', 'Passwords']]
         .map(([k, l]) => `<button class="tab ${TAB === k ? 'on' : ''}" data-k="${k}">${l}</button>`).join('')}
       <span class="spacer"></span>
       <button class="btn small" id="refresh">↻ Refresh</button>
@@ -409,6 +419,7 @@ async function render(quiet = false) {
     if (TAB === 'overview') await renderOverview(v);
     else if (TAB === 'players') await renderPlayers(v);
     else if (TAB === 'answers') await renderAnswers(v);
+    else if (TAB === 'appeals') await renderAppeals(v);
     else if (TAB === 'notices') await renderNotices(v);
     else if (TAB === 'passwords') await renderPasswords(v);
     else if (TAB === 'tools') await renderTools(v);
@@ -564,6 +575,55 @@ async function renderAnswers(v) {
     const r = await tools('delete_answer', { id: +b.dataset.id, refund: true });
     toast(`Answer deleted (−${r.points_removed} pts)`); b.closest('tr').remove();
   }));
+}
+
+async function renderAppeals(v) {
+  const [list, bans] = await Promise.all([appeals('list', { status: AP_FILTER }), appeals('bans')]);
+  const pill = { won: '<span class="pill ok">WON</span>', lost: '<span class="pill bad">LOST</span>', undone: '<span class="pill">UNDONE</span>',
+    error: '<span class="pill">CHECKER ERROR</span>', pending: '<span class="pill">CHECKING</span>' };
+  const won = list.filter(a => a.status === 'won').length, lost = list.filter(a => a.status === 'lost').length;
+  v.innerHTML = `
+    <div class="toolbar">
+      <span class="muted">Every appeal the AI checked. <b>Undo</b> takes the points back. <b>Approve</b> makes a new answer count automatically from now on.</span>
+      <span class="spacer"></span>
+      <select id="apf" aria-label="Show">
+        <option value="">All (${list.length})</option><option value="won">Won</option><option value="lost">Lost</option><option value="undone">Undone</option><option value="error">Checker errors</option>
+      </select>
+    </div>
+    ${bans.length ? `<div class="card" style="margin-bottom:14px"><h2 class="label">APPEAL BANS RIGHT NOW</h2>
+      ${bans.map(b => `<div class="toolbar"><b>${esc(b.name)}</b><span class="muted">until ${when(b.until)}</span>
+        <button class="btn small unban" data-id="${b.id}">Lift ban</button></div>`).join('')}</div>` : ''}
+    <p class="muted" style="margin:0 0 10px">${AP_FILTER ? '' : `Showing the latest ${list.length}: ${won} won, ${lost} lost.`}</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>WHEN</th><th>PLAYER</th><th>QUESTION</th><th>THEY TYPED</th><th>RESULT</th><th>AI'S REASON</th><th class="num">PTS</th><th></th></tr></thead>
+      <tbody>${list.map(a => `<tr>
+        <td class="muted" title="${when(a.created)}" style="white-space:nowrap">${ago(a.created)}</td>
+        <td>${esc(a.player || '(removed)')}</td>
+        <td><span class="muted">${esc(a.subject || '')}</span><br>${esc(a.question || '')}</td>
+        <td><b>${esc(a.typed || '')}</b>${a.matched ? `<div class="wrongs">= ${esc(a.matched)}</div>` : a.status === 'won' ? '<div class="wrongs">new answer</div>' : ''}</td>
+        <td>${pill[a.status] || esc(a.status)}${a.saved ? ' <span class="pill ok">APPROVED</span>' : ''}</td>
+        <td class="muted" style="max-width:260px">${esc(a.reason || '')}</td>
+        <td class="num">${a.points}</td>
+        <td class="acts" style="white-space:nowrap">
+          ${a.status === 'won' ? `<button class="btn small danger undo" data-id="${a.id}" title="Take these points back">Undo</button>` : ''}
+          ${a.status === 'won' && !a.matched && !a.saved ? `<button class="btn small approve" data-id="${a.id}" title="Accept this answer automatically from now on">Approve</button>` : ''}
+          ${a.saved ? `<button class="btn small unapprove" data-id="${a.id}" title="Stop accepting it automatically">Unapprove</button>` : ''}
+        </td></tr>`).join('') || '<tr><td colspan="8" class="muted">No appeals yet.</td></tr>'}
+      </tbody></table></div>`;
+  $('#apf').value = AP_FILTER;
+  $('#apf').onchange = e => { AP_FILTER = e.target.value; render(); };
+  document.querySelectorAll('.undo').forEach(b => armed(b, 'Sure?', async () => {
+    const r = await appeals('undo', { id: +b.dataset.id }); toast(`Appeal undone (−${r.points} pts)`); render(true);
+  }));
+  document.querySelectorAll('.approve').forEach(b => b.onclick = async () => {
+    await appeals('approve', { id: +b.dataset.id }); toast('Approved: it now counts automatically'); render(true);
+  });
+  document.querySelectorAll('.unapprove').forEach(b => b.onclick = async () => {
+    await appeals('unapprove', { id: +b.dataset.id }); toast('No longer accepted automatically'); render(true);
+  });
+  document.querySelectorAll('.unban').forEach(b => b.onclick = async () => {
+    await appeals('unban', { player_id: +b.dataset.id }); toast('Ban lifted'); render(true);
+  });
 }
 
 async function renderNotices(v) {
