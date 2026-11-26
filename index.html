@@ -288,6 +288,14 @@ function describeUA(ua) {
   return { text: b + ' · ' + o, bot: false };
 }
 function secs(ms) { return ms == null ? '—' : (ms / 1000).toFixed(1) + 's'; }
+async function account(action, args = {}) {
+  const res = await rpc('lp_admin_account', { p_pw: PW, p_action: action, p_args: args });
+  if (res && res.error) {
+    if (res.error === 'Wrong password.') logout('Your session ended. Log in again.');
+    throw new Error(res.error);
+  }
+  return res;
+}
 async function tools(action, args = {}) {
   const res = await rpc('lp_admin_tools', { p_pw: PW, p_action: action, p_args: args });
   if (res && res.error) {
@@ -711,6 +719,9 @@ const HELP = `Commands (names can be typed in full or just the start):
   unblock <word>           remove a block
   notify <message>         pop-up announcement to everyone (1 day)
   dm <name>: <message>     private pop-up message to one player
+  email <name>             show the email a player signed up with
+  password <name> <new>    set a new password for a player who forgot theirs
+  unlink <name>            delete their account login (keeps name + points)
   warn <message>           send a red warning to everyone (1 day)
   reset                    let everyone retake today's papers
   clear                    clear this console`;
@@ -825,6 +836,19 @@ async function runCommand(line) {
       const p = await findPlayer(arg.slice(0, i).trim());
       await msg('send', { id: p.id, message: arg.slice(i + 1).trim(), kind: 'info', minutes: 10080, popup: true });
       return say(`✓ Sent ${p.name} a private message (pops up, shows for 1 week)`, 'ok');
+    }
+    if (cmd === 'email' || cmd === 'account') {
+      const p = await findPlayer(arg); const r = await account('email', { id: p.id });
+      return say(`${p.name} signed up with: ${r.email}`, 'ok');
+    }
+    if (cmd === 'password' || cmd === 'resetpw') {
+      const m = arg.match(/^(.*\S)\s+(\S+)$/); if (!m) throw new Error('Use: password <name> <new password>');
+      const p = await findPlayer(m[1]); const r = await account('set_password', { id: p.id, password: m[2] });
+      return say(`✓ ${p.name} (${r.email}) can now log in with the password: ${m[2]}`, 'ok');
+    }
+    if (cmd === 'unlink') {
+      const p = await findPlayer(arg); const r = await account('unlink', { id: p.id });
+      return say(`✓ Deleted the login for ${p.name} (${r.email}). Their name and points stay.`, 'ok');
     }
     if (cmd === 'notify' || cmd === 'warn') {
       if (!arg) throw new Error('Write a message after the command.');
